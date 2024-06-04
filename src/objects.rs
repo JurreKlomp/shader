@@ -1,10 +1,13 @@
 use super::vec3::Vec3;
 
+use serde::{Serialize, Deserialize};
+
 pub trait Uniforms<const N: usize> {
     fn get_uniforms<'a>(shader_program: u32) -> [(&'a str, i32); N];
     fn update_uniforms(&self, uniforms: &[(&str, i32); N]);
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Camera {
     pub position: Vec3,
     pub fov: f32,
@@ -33,6 +36,7 @@ impl Uniforms<2> for Camera {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Material {
     pub albedo: Vec3,
     pub metallic: f32,
@@ -65,6 +69,7 @@ impl Uniforms<3> for Material {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Sphere {
     pub position: Vec3,
     pub radius: f32,
@@ -94,7 +99,7 @@ impl Uniforms<2> for Sphere {
     }
 }
 
-fn create_uniform(shader_program: u32, uniform_name: &str) -> (&str, i32) {
+pub fn create_uniform(shader_program: u32, uniform_name: &str) -> (&str, i32) {
     let uniform_location = unsafe {
         let cstring = std::ffi::CString::new(uniform_name).unwrap();
         gl::GetUniformLocation(shader_program, cstring.as_ptr())

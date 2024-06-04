@@ -4,6 +4,7 @@ pub struct Window {
     pub handle: glfw::PWindow,
     glfw: Glfw,
     receiver: glfw::GlfwReceiver<(f64, WindowEvent)>,
+    size: (u32, u32),
 }
 
 impl Window {
@@ -24,21 +25,34 @@ impl Window {
             glfw,
             handle,
             receiver: events,
+            size: (width, height),
         }
     }
+
+    pub fn get_size(&self) -> (u32, u32) {
+        self.size
+    }
+
     pub fn should_close(&self) -> bool {
         self.handle.should_close()
     }
+
     pub fn update(&mut self) {
         self.glfw.poll_events();
         self.process_events();
         self.handle.swap_buffers();
     }
+
     pub fn process_events(&mut self) {
-        for (_, event) in glfw::flush_messages(&self.receiver) {
+        let messages = glfw::flush_messages(&self.receiver);
+        for (_, event) in messages {
             match event {
-                glfw::WindowEvent::Key(glfw::Key::Escape, _, Action::Repeat, _) => {
+                glfw::WindowEvent::Key(glfw::Key::Escape, _, Action::Press, _) => {
                     self.handle.set_should_close(true);
+                }
+                glfw::WindowEvent::FramebufferSize(width, height) => {
+                    self.size = (width as u32, height as u32);
+                    println!("{}, {}", width, height);
                 }
                 _ => {}
             }

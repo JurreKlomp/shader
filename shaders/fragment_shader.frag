@@ -1,6 +1,6 @@
 #version 330
 
-#define PI 3.1415926535
+#define PI 3.14159265358979323846264338327950288
 
 struct Camera {
     vec3 position;
@@ -22,13 +22,11 @@ struct Sphere {
 uniform Camera camera;
 uniform Sphere sphere;
 
+uniform float width;
+uniform float height;
+
 void main() {
     vec3 color = vec3(0.0, 0.0, 0.0);
-
-    float width = 960.0;
-    float height = 540.0;
-
-    vec2 size = vec2(width, height);
 
     vec3 albedo = sphere.material.albedo;
     float roughness = sphere.material.roughness;
@@ -65,7 +63,7 @@ void main() {
         
         if (t > 0.0) {
             vec3 hit_position = ray_origin + t * ray_direction;
-            vec3 normal = hit_position - sphere.position;
+            vec3 normal = normalize(hit_position - sphere.position);
 
             vec3 light = normalize(vec3(-1.0, -1.0, -0.5));
 
