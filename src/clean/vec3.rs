@@ -1,7 +1,10 @@
-use std::ops::{Add, Div, Mul, Sub};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use std::{
+    cmp::Ordering,
+    ops::{Add, Div, Mul, Sub},
+};
 
-#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Copy, Clone)]
 pub struct Vec3 {
     pub x: f32,
     pub y: f32,
@@ -34,6 +37,18 @@ impl Vec3 {
             v.z * w.x - v.x * w.z,
             v.x * w.y - v.y * w.x,
         )
+    }
+
+    pub fn update_uniform(&self, location: i32) {
+        unsafe {
+            gl::Uniform3f(location, self.x, self.y, self.z);
+        }
+    }
+}
+
+impl PartialOrd for Vec3 {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Vec3::dot(*other, *other).partial_cmp(&Vec3::dot(*self, *self))
     }
 }
 

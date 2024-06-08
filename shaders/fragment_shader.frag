@@ -20,62 +20,92 @@ struct Sphere {
 };
 
 uniform Camera camera;
-uniform Sphere sphere;
+uniform Sphere spheres[2];
 
 uniform float width;
 uniform float height;
 
+Sphere[spheres.length()] sorted_spheres() {
+    Sphere ordered[] = spheres;
+
+    for(int i = 0; i < spheres.length(); i++) {
+        for(int j = 0; j < spheres.length() - i - 1; j++) {
+            vec3 pos_a = camera.position - ordered[j].position;
+            vec3 pos_b = camera.position - ordered[j + 1].position;
+
+            if(dot(pos_a, pos_a) < dot(pos_b, pos_b)) {
+                Sphere temp = ordered[j];
+                ordered[j] = ordered[j + 1];
+                ordered[j + 1] = temp;
+            }
+
+        }
+    }
+    return ordered;
+}
+
 void main() {
     vec3 color = vec3(0.0, 0.0, 0.0);
 
-    vec3 albedo = sphere.material.albedo;
-    float roughness = sphere.material.roughness;
-    float metallic = sphere.material.metallic;
+    const int BOUNCES = 5;
 
-    vec2 fragCoord = gl_FragCoord.xy;
+    // Sphere[] ordered = sorted_spheres();
+    Sphere[] ordered = spheres;
 
-    vec2 uv = fragCoord - vec2(width / 2.0, height / 2.0);
-
-    float focal_length = width / (2.0 * tan(camera.fov * PI / 360.0));
-
-    vec3 ray_direction = normalize(vec3(uv.x, uv.y, focal_length));
-    vec3 ray_origin = camera.position - sphere.position;
-
-    float b = 2.0 * dot(ray_direction, ray_origin);
-    float c = dot(ray_origin, ray_origin) - sphere.radius * sphere.radius;
-
-    float d = b * b - 4.0 * c;
-
-    if (d > 0.0) {
-
-        float t1 = -b + sqrt(d);
-        float t2 = -b - sqrt(d);
-
-        float t = -1.0;
-
-        if (t1 > 0.0 && t2 > 0.0) {
-            t = min(t1, t2);
-        } else if (t1 > 0.0) {
-            t = t1;
-        } else if (t2 > 0.0) {
-            t = t2;
-        }
-        
-        if (t > 0.0) {
-            vec3 hit_position = ray_origin + t * ray_direction;
-            vec3 normal = normalize(hit_position - sphere.position);
-
-            vec3 light = normalize(vec3(-1.0, -1.0, -0.5));
-
-
-            float luminence = dot(normal, -light);
-
-            color = albedo * luminence;
-        }
+    for(int bounce = 0; bounce < BOUNCES; bounce++) {
 
     }
 
+    for(int i = 0; i < ordered.length(); i++) {
+        Sphere sphere = ordered[i];
 
+        vec3 albedo = sphere.material.albedo;
+        float roughness = sphere.material.roughness;
+        float metallic = sphere.material.metallic;
+
+        vec2 fragCoord = gl_FragCoord.xy;
+
+        vec2 uv = fragCoord - vec2(width / 2.0, height / 2.0);
+
+        float focal_length = width / (2.0 * tan(camera.fov * PI / 360.0));
+
+        vec3 ray_direction = normalize(vec3(uv.x, uv.y, focal_length));
+        vec3 ray_origin = camera.position - sphere.position;
+
+        float b = 2.0 * dot(ray_direction, ray_origin);
+        float c = dot(ray_origin, ray_origin) - sphere.radius * sphere.radius;
+
+        float d = b * b - 4.0 * c;
+
+        if(d > 0.0) {
+
+            float t1 = -b + sqrt(d);
+            float t2 = -b - sqrt(d);
+
+            float t = -1.0;
+
+            if(t1 > 0.0 && t2 > 0.0) {
+                t = min(t1, t2);
+            } else if(t1 > 0.0) {
+                t = t1;
+            } else if(t2 > 0.0) {
+                t = t2;
+            }
+
+            if(t > 0.0) {
+                vec3 hit_position = ray_origin + t * ray_direction;
+                vec3 normal = normalize(hit_position - sphere.position);
+
+                vec3 light = normalize(vec3(-1.0, -1.0, -0.5));
+
+                float luminence = dot(normal, -light);
+
+                color = albedo * luminence;
+            }
+
+        }
+
+    }
 
     gl_FragColor = vec4(color, 1.0);
 }

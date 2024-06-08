@@ -1,10 +1,7 @@
 mod clean;
-
-mod objects;
 mod vbo;
 
 use clean::*;
-use objects::*;
 
 use serde::{Deserialize, Serialize};
 
@@ -14,59 +11,103 @@ const TITLE: &str = "Shader";
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Config {
-    camera: Camera,
-    sphere: Sphere,
+    camera: objects::Camera,
+    spheres: Vec<objects::Sphere>,
 }
 
 fn main() {
     println!("Hello, world!");
 
     let config_file = std::fs::read_to_string("./config.json").unwrap();
-
-    let config: Config = serde_json::from_str(&config_file).unwrap();
-    let Config { camera, sphere } = config;
-
-    // println!("{:?}", config);
+    let Config {
+        camera,
+        mut spheres,
+    } = serde_json::from_str(&config_file).unwrap();
+    spheres.sort_by(|a, b| {
+        (camera.position - a.position)
+            .partial_cmp(&(camera.position - b.position))
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
 
     let mut window = window::Window::new(WIDTH, HEIGHT, TITLE);
 
     // [----------OPENGL----------]
-    create_square();
+    create_viewport();
 
-    let mut shader_program = shader_program::ShaderProgram::new();
-    shader_program.add_shader("./shaders/vertex_shader.vert", gl::VERTEX_SHADER);
-    shader_program.add_shader("./shaders/fragment_shader.frag", gl::FRAGMENT_SHADER);
-    let shader_program = shader_program.compile();
-    shader_program.bind();
+    let mut program = shader_program::ShaderProgram::new();
+    program.add_shader("./shaders/vertex_shader.vert", gl::VERTEX_SHADER);
+    program.add_shader("./shaders/fragment_shader.frag", gl::FRAGMENT_SHADER);
+    let program = program.compile();
+    program.bind();
 
-    let camera_uniforms = Camera::get_uniforms(shader_program.id);
-    let sphere_uniforms = Sphere::get_uniforms(shader_program.id);
-    let material_uniforms = Material::get_uniforms(shader_program.id);
+    let (_, width_uniform) = create_uniform(program.id, "width".to_string());
+    let (_, height_uniform) = create_uniform(program.id, "height".to_string());
 
-    let (_, width_uniform) = objects::create_uniform(shader_program.id, "width");
-    let (_, height_uniform) = objects::create_uniform(shader_program.id, "height");
+    let (_, camera_position_uniform) = create_uniform(program.id, "camera.position".to_string());
+    let (_, camera_fov_uniform) = create_uniform(program.id, "camera.fov".to_string());
+
+    let mut sphere_uniforms = Vec::new();
+
+    for i in 0..spheres.len() {
+        let (_, position) = create_uniform(program.id, format!("spheres[{i}].position"));
+        let (_, radius) = create_uniform(program.id, format!("spheres[{i}].radius"));
+        let (_, albedo) = create_uniform(program.id, format!("spheres[{i}].material.albedo"));
+        let (_, roughness) = create_uniform(program.id, format!("spheres[{i}].material.roughness"));
+        let (_, metallic) = create_uniform(program.id, format!("spheres[{i}].material.metallic"));
+
+        sphere_uniforms.push((position, radius, albedo, roughness, metallic));
+    }
+
     // [----------OPENGL----------]
 
     while !window.should_close() {
         unsafe {
-            camera.update_uniforms(&camera_uniforms);
-            sphere.update_uniforms(&sphere_uniforms);
-            sphere.material.update_uniforms(&material_uniforms);
-
             let (width, height) = window.get_size();
             gl::Viewport(0, 0, width as i32, height as i32);
             gl::Uniform1f(width_uniform, width as f32);
             gl::Uniform1f(height_uniform, height as f32);
+
+            camera.position.update_uniform(camera_position_uniform);
+            gl::Uniform1f(camera_fov_uniform, camera.fov);
+
+            for i in 0..spheres.len() {
+                let sphere = &spheres[i];
+                let (
+                    position_uniform,
+                    radius_uniform,
+                    albedo_uniform,
+                    roughness_uniform,
+                    metallic_uniform,
+                ) = sphere_uniforms[i];
+
+                sphere.position.update_uniform(position_uniform);
+                gl::Uniform1f(radius_uniform, sphere.radius);
+                sphere.material.albedo.update_uniform(albedo_uniform);
+                gl::Uniform1f(roughness_uniform, sphere.material.roughness);
+                gl::Uniform1f(metallic_uniform, sphere.material.metallic);
+            }
 
             gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
         }
 
         window.update();
     }
-    shader_program.unbind();
+    program.unbind();
 }
 
-fn create_square() {
+pub fn create_uniform(shader_program: u32, uniform_name: String) -> (String, i32) {
+    let uniform_location = unsafe {
+        let cstring = std::ffi::CString::new(uniform_name.as_bytes()).unwrap();
+        gl::GetUniformLocation(shader_program, cstring.as_ptr())
+    };
+
+    if uniform_location < 0 {
+        panic!("Cannot create uniform {}", uniform_name);
+    }
+    (uniform_name, uniform_location)
+}
+
+fn create_viewport() {
     let data: [f32; 8] = [-1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0];
 
     let mut vbo = 0;
