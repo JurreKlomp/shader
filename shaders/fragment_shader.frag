@@ -4,6 +4,7 @@
 
 struct Camera {
     vec3 position;
+    vec3 angles;
     float fov;
 };
 
@@ -25,31 +26,22 @@ uniform Sphere spheres[2];
 uniform float width;
 uniform float height;
 
-Sphere[spheres.length()] sorted_spheres() {
-    Sphere ordered[] = spheres;
+void rotate(vec3 point, vec3 around, vec3 angles) {
+    vec3 relative = point - around;
 
-    for(int i = 0; i < spheres.length(); i++) {
-        for(int j = 0; j < spheres.length() - i - 1; j++) {
-            vec3 pos_a = camera.position - ordered[j].position;
-            vec3 pos_b = camera.position - ordered[j + 1].position;
-
-            if(dot(pos_a, pos_a) < dot(pos_b, pos_b)) {
-                Sphere temp = ordered[j];
-                ordered[j] = ordered[j + 1];
-                ordered[j + 1] = temp;
-            }
-
-        }
-    }
-    return ordered;
 }
 
 void main() {
     vec3 color = vec3(0.0, 0.0, 0.0);
 
+    vec2 fragCoord = gl_FragCoord.xy;
+    vec2 uv = fragCoord - vec2(width / 2.0, height / 2.0);
+    float focal_length = width / (2.0 * tan(camera.fov * PI / 360.0));
+
+    vec3 angles = camera.angles;
+
     const int BOUNCES = 5;
 
-    // Sphere[] ordered = sorted_spheres();
     Sphere[] ordered = spheres;
 
     for(int bounce = 0; bounce < BOUNCES; bounce++) {
@@ -63,12 +55,6 @@ void main() {
         float roughness = sphere.material.roughness;
         float metallic = sphere.material.metallic;
 
-        vec2 fragCoord = gl_FragCoord.xy;
-
-        vec2 uv = fragCoord - vec2(width / 2.0, height / 2.0);
-
-        float focal_length = width / (2.0 * tan(camera.fov * PI / 360.0));
-
         vec3 ray_direction = normalize(vec3(uv.x, uv.y, focal_length));
         vec3 ray_origin = camera.position - sphere.position;
 
@@ -79,8 +65,8 @@ void main() {
 
         if(d > 0.0) {
 
-            float t1 = -b + sqrt(d);
-            float t2 = -b - sqrt(d);
+            float t1 = (-b + sqrt(d)) / 2.0;
+            float t2 = (-b - sqrt(d)) / 2.0;
 
             float t = -1.0;
 
@@ -96,7 +82,7 @@ void main() {
                 vec3 hit_position = ray_origin + t * ray_direction;
                 vec3 normal = normalize(hit_position - sphere.position);
 
-                vec3 light = normalize(vec3(-1.0, -1.0, -0.5));
+                vec3 light = normalize(vec3(-1.0, -1.0, 0.5));
 
                 float luminence = dot(normal, -light);
 

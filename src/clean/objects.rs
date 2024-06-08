@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Camera {
     pub position: Vec3,
+    pub angles: Vec3,
     pub fov: f32,
 }
 

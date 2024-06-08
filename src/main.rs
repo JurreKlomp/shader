@@ -10,7 +10,7 @@ const HEIGHT: u32 = 540;
 const TITLE: &str = "Shader";
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Config {
+struct Scene {
     camera: objects::Camera,
     spheres: Vec<objects::Sphere>,
 }
@@ -18,9 +18,9 @@ struct Config {
 fn main() {
     println!("Hello, world!");
 
-    let config_file = std::fs::read_to_string("./config.json").unwrap();
-    let Config {
-        camera,
+    let config_file = std::fs::read_to_string("./scene.json").unwrap();
+    let Scene {
+        mut camera,
         mut spheres,
     } = serde_json::from_str(&config_file).unwrap();
     spheres.sort_by(|a, b| {
@@ -44,6 +44,7 @@ fn main() {
     let (_, height_uniform) = create_uniform(program.id, "height".to_string());
 
     let (_, camera_position_uniform) = create_uniform(program.id, "camera.position".to_string());
+    let (_, camera_angles_uniform) = create_uniform(program.id, "camera.angles".to_string());
     let (_, camera_fov_uniform) = create_uniform(program.id, "camera.fov".to_string());
 
     let mut sphere_uniforms = Vec::new();
@@ -61,6 +62,27 @@ fn main() {
     // [----------OPENGL----------]
 
     while !window.should_close() {
+
+        const DELTA: f32 = 0.0005;
+        if window.is_pressed(glfw::Key::W) {
+            camera.position.z += DELTA;
+        }
+        if window.is_pressed(glfw::Key::A) {
+            camera.position.x -= DELTA;
+        }
+        if window.is_pressed(glfw::Key::S) {
+            camera.position.z -= DELTA;
+        }
+        if window.is_pressed(glfw::Key::D) {
+            camera.position.x += DELTA;
+        }
+        if window.is_pressed(glfw::Key::Space) {
+            camera.position.y += DELTA;
+        }
+        if window.is_pressed(glfw::Key::LeftShift) {
+            camera.position.y -= DELTA;
+        }
+
         unsafe {
             let (width, height) = window.get_size();
             gl::Viewport(0, 0, width as i32, height as i32);
@@ -68,6 +90,7 @@ fn main() {
             gl::Uniform1f(height_uniform, height as f32);
 
             camera.position.update_uniform(camera_position_uniform);
+            camera.angles.update_uniform(camera_angles_uniform);
             gl::Uniform1f(camera_fov_uniform, camera.fov);
 
             for i in 0..spheres.len() {
