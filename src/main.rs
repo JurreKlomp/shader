@@ -62,6 +62,11 @@ fn main() {
     // [----------OPENGL----------]
 
     while !window.should_close() {
+
+        let (mouse_x, mouse_y) = window.get_mouse_position();
+
+        println!("({}, {})", mouse_x, mouse_y);
+
         const DELTA: f32 = 0.0005;
         if window.is_pressed(glfw::Key::W) {
             camera.position.z += DELTA;
