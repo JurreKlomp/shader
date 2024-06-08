@@ -5,8 +5,8 @@ use clean::*;
 
 use serde::{Deserialize, Serialize};
 
-const WIDTH: u32 = 960;
-const HEIGHT: u32 = 540;
+const WIDTH: u32 = 1920;
+const HEIGHT: u32 = 1080;
 const TITLE: &str = "Shader";
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -62,7 +62,6 @@ fn main() {
     // [----------OPENGL----------]
 
     while !window.should_close() {
-
         const DELTA: f32 = 0.0005;
         if window.is_pressed(glfw::Key::W) {
             camera.position.z += DELTA;
