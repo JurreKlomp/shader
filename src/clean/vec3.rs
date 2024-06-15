@@ -39,6 +39,20 @@ impl Vec3 {
         )
     }
 
+    pub fn rotate(&self, angles: Vec3) -> Self {
+        let cos = Vec3::new(f32::cos(angles.x), f32::cos(angles.y), f32::cos(angles.z));
+        let sin = Vec3::new(f32::sin(angles.x), f32::sin(angles.y), f32::sin(angles.z));
+        Self::new(
+            (cos.x * cos.y) * self.x
+                + (cos.x * sin.y * sin.z - sin.x * cos.y) * self.y
+                + (cos.x * sin.y * cos.z + sin.x * sin.z) * self.z,
+            (sin.x * cos.y) * self.x
+                + (sin.x * sin.y * sin.z + cos.x * cos.z) * self.y
+                + (sin.x * sin.y * cos.z - cos.x * sin.z) * self.z,
+            (-sin.y) * self.x + (cos.y * sin.z) * self.y + (cos.y * cos.z) * self.z,
+        )
+    }
+
     pub fn update_uniform(&self, location: i32) {
         unsafe {
             gl::Uniform3f(location, self.x, self.y, self.z);
@@ -56,7 +70,7 @@ impl Add<Vec3> for Vec3 {
     type Output = Vec3;
 
     fn add(self, rhs: Vec3) -> Self::Output {
-        Vec3::new(self.x + self.z, self.y + rhs.y, self.z + rhs.z)
+        Vec3::new(self.x + rhs.x, self.y + rhs.y, self.z + rhs.z)
     }
 }
 

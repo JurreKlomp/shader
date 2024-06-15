@@ -4,6 +4,7 @@ mod vbo;
 use clean::*;
 
 use serde::{Deserialize, Serialize};
+use vec3::Vec3;
 
 const WIDTH: u32 = 1920;
 const HEIGHT: u32 = 1080;
@@ -23,11 +24,6 @@ fn main() {
         mut camera,
         mut spheres,
     } = serde_json::from_str(&config_file).unwrap();
-    spheres.sort_by(|a, b| {
-        (camera.position - a.position)
-            .partial_cmp(&(camera.position - b.position))
-            .unwrap_or(std::cmp::Ordering::Equal)
-    });
 
     let mut window = window::Window::new(WIDTH, HEIGHT, TITLE);
 
@@ -62,23 +58,31 @@ fn main() {
     // [----------OPENGL----------]
 
     while !window.should_close() {
+        spheres.sort_by(|a, b| {
+            (camera.position - a.position)
+                .partial_cmp(&(camera.position - b.position))
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
-        let (mouse_x, mouse_y) = window.get_mouse_position();
+        const DELTA: f32 = 0.005;
 
-        println!("({}, {})", mouse_x, mouse_y);
+        spheres.last_mut().unwrap().position.z -= DELTA / 50.0;
+        // let (mouse_x, mouse_y) = window.get_mouse_position();
+        // println!("({:?}, {:?})", mouse_x, mouse_y);
 
-        const DELTA: f32 = 0.0005;
+        let mut movement_delta = Vec3::new(0.0, 0.0, 0.0);
+
         if window.is_pressed(glfw::Key::W) {
-            camera.position.z += DELTA;
+            movement_delta.z += DELTA;
         }
         if window.is_pressed(glfw::Key::A) {
-            camera.position.x -= DELTA;
+            movement_delta.x -= DELTA;
         }
         if window.is_pressed(glfw::Key::S) {
-            camera.position.z -= DELTA;
+            movement_delta.z -= DELTA;
         }
         if window.is_pressed(glfw::Key::D) {
-            camera.position.x += DELTA;
+            movement_delta.x += DELTA;
         }
         if window.is_pressed(glfw::Key::Space) {
             camera.position.y += DELTA;
@@ -86,6 +90,20 @@ fn main() {
         if window.is_pressed(glfw::Key::LeftShift) {
             camera.position.y -= DELTA;
         }
+        if window.is_pressed(glfw::Key::Up) {
+            camera.angles.x -= DELTA / 5.0;
+        }
+        if window.is_pressed(glfw::Key::Down) {
+            camera.angles.x += DELTA / 5.0;
+        }
+        if window.is_pressed(glfw::Key::Left) {
+            camera.angles.y -= DELTA / 5.0;
+        }
+        if window.is_pressed(glfw::Key::Right) {
+            camera.angles.y += DELTA / 5.0;
+        }
+
+        camera.position = camera.position + movement_delta.rotate(camera.angles);
 
         unsafe {
             let (width, height) = window.get_size();
