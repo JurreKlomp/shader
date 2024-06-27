@@ -1,3 +1,4 @@
+#![allow(unused)]
 use std::collections::HashSet;
 
 use glfw::{Action, Context, Glfw, WindowEvent};

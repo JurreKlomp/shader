@@ -66,7 +66,6 @@ fn main() {
 
         const DELTA: f32 = 0.005;
 
-        spheres.last_mut().unwrap().position.z -= DELTA / 50.0;
         // let (mouse_x, mouse_y) = window.get_mouse_position();
         // println!("({:?}, {:?})", mouse_x, mouse_y);
 
