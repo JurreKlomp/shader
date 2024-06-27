@@ -16,8 +16,6 @@ struct Scene {
 }
 
 fn main() {
-    println!("Hello, world!");
-
     let config_file = std::fs::read_to_string("./scene.json").unwrap();
     let Scene {
         mut camera,
@@ -64,9 +62,6 @@ fn main() {
         });
 
         const DELTA: f32 = 0.005;
-
-        // let (mouse_x, mouse_y) = window.get_mouse_position();
-        // println!("({:?}, {:?})", mouse_x, mouse_y);
 
         let mut movement_delta = Vec3::new(0.0, 0.0, 0.0);
 

@@ -92,7 +92,6 @@ impl Window {
                 }
                 glfw::WindowEvent::FramebufferSize(width, height) => {
                     self.size = (width as u32, height as u32);
-                    println!("{}, {}", width, height);
                 }
                 _ => {}
             }
