@@ -54,10 +54,6 @@ struct Ray {
     vec3 direction;
 };
 
-float rand(vec2 co) {
-    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
-}
-
 HitInfo trace_ray(Ray ray) {
     HitInfo closest_hit = HitInfo(true, vec3(1, 1, 1), vec3(0, 0, 0), 0, Material(vec3(1, 1, 1), 0, 0));
     for(int i = 0; i < spheres.length(); i++) {
