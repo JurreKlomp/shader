@@ -1,6 +1,6 @@
-mod clean;
+mod items;
 
-use clean::*;
+use items::*;
 
 use serde::{Deserialize, Serialize};
 use vec3::Vec3;
